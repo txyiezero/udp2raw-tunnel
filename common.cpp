@@ -11,6 +11,7 @@
 
 #include <random>
 #include <cmath>
+#include <regex>
 
 //static int random_number_fd=-1;
 int force_socket_buf=0;
@@ -19,6 +20,67 @@ int address_t::from_str(char *str)
 {
 	clear();
 
+	const string flnode=str;
+	mylog(log_info,"parsing address: %s\n",flnode);
+
+	regex rgxhostname("^((?:[a-zA-Z0-9-]+\\.)+[a-z]{2,3}):([0-9]{4,5})$");
+	regex rgxipv4("^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}):([0-9]{4,5})$");
+	regex rgxipv6("^\\[([a-z0-9:]+)\\]:([0-9]{4,5})$");
+	smatch shost;
+
+	if(regex_match(flnode,shost,rgxhostname)||\
+	regex_match(flnode,shost,rgxipv4)||regex_match(flnode,shost,rgxipv6))
+	{
+		const string node=shost[1],port=shost[2];
+		u32_t nport;
+		sprintf((char*)port.c_str(),"%u",nport);
+		if(1025>nport||65535<nport)
+		{
+			mylog(log_error,"invalid port: %d\n",nport);
+			myexit(-1);
+		}
+		int ret_getaddr=EAI_NONAME;
+		addrinfo hints={0},*hostinfo=NULL;
+		hints.ai_family=AF_UNSPEC;
+		hints.ai_socktype=SOCK_RAW;
+#if defined(__MINGW32__)
+		WSADTA wsadata;
+		if(WSAStartup(MAKEWORD(2, 2), &wsadata))
+		{
+			mylog(log_error,"failed to startup WSA\n");
+			myexit(-1);
+		}
+		ret_getaddr=getaddrinfo(node.c_str(),port.c_str(),&hints,&hostinfo);
+		WSACleanup();
+#else
+		ret_getaddr=getaddrinfo(node.c_str(),port.c_str(),&hints,&hostinfo);
+#endif
+		if(ret_getaddr)
+		{
+			freeaddrinfo(hostinfo);
+			mylog(log_error,"failed to dns: {%s}\n",gai_strerror(ret_getaddr));
+			myexit(-1);
+		}
+		if(AF_INET==hostinfo->ai_family)
+		{
+			inner.ipv4=*(sockaddr_in*)hostinfo->ai_addr;
+		}
+		else if(AF_INET6==hostinfo->ai_family)
+		{
+			inner.ipv6=*(sockaddr_in6*)hostinfo->ai_addr;
+		}
+		else
+		{
+			mylog(log_error,"ip_addr is invalid\n");
+			myexit(-1);
+		}
+	}
+	else
+	{
+		mylog(log_error,"failed to parse\n");
+		myexit(-1);
+	}
+/*	
 	char ip_addr_str[100];u32_t port;
 	mylog(log_info,"parsing address: %s\n",str);
 	int is_ipv6=0;
@@ -87,6 +149,7 @@ int address_t::from_str(char *str)
 			myexit(-1);
 		}
 	}
+*/
 
 	return 0;
 }

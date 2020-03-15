@@ -58,6 +58,8 @@
 #if defined(__MINGW32__)
 #include <winsock2.h>
 #include <ws2ipdef.h>
+#include <WS2tcpip.h>
+#pragma comment (lib, "Ws2_32.lib")
 typedef unsigned char u_int8_t;
 typedef unsigned short u_int16_t;
 typedef unsigned int u_int32_t;
@@ -68,6 +70,7 @@ typedef int socklen_t;
 #include <sys/ioctl.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <netdb.h>
 #endif
 
 
