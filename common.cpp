@@ -21,7 +21,7 @@ int address_t::from_str(char *str)
 	clear();
 
 	const string flnode=str;
-	mylog(log_info,"parsing address: %s\n",flnode);
+	mylog(log_info,"parsing address: %s\n",str);
 
 	regex rgxhostname("^((?:[a-zA-Z0-9-]+\\.)+[a-z]{2,3}):([0-9]{4,5})$");
 	regex rgxipv4("^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}):([0-9]{4,5})$");
@@ -33,7 +33,7 @@ int address_t::from_str(char *str)
 	{
 		const string node=shost[1],port=shost[2];
 		u32_t nport;
-		sprintf((char*)port.c_str(),"%u",nport);
+		nport=atoi(port.c_str());
 		if(1025>nport||65535<nport)
 		{
 			mylog(log_error,"invalid port: %d\n",nport);
@@ -42,7 +42,7 @@ int address_t::from_str(char *str)
 		int ret_getaddr=EAI_NONAME;
 		addrinfo hints={0},*hostinfo=NULL;
 		hints.ai_family=AF_UNSPEC;
-		hints.ai_socktype=SOCK_RAW;
+		hints.ai_protocol=IPPROTO_RAW;
 #if defined(__MINGW32__)
 		WSADTA wsadata;
 		if(WSAStartup(MAKEWORD(2, 2), &wsadata))
