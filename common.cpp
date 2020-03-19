@@ -40,9 +40,7 @@ int address_t::from_str(char *str)
 			myexit(-1);
 		}
 		int ret_getaddr=EAI_NONAME;
-		addrinfo hints={0},*hostinfo=NULL;
-		hints.ai_family=AF_UNSPEC;
-		hints.ai_protocol=IPPROTO_RAW;
+		addrinfo *hostinfo=NULL;
 #if defined(__MINGW32__)
 		WSADTA wsadata;
 		if(WSAStartup(MAKEWORD(2, 2), &wsadata))
@@ -53,7 +51,7 @@ int address_t::from_str(char *str)
 		ret_getaddr=getaddrinfo(node.c_str(),port.c_str(),&hints,&hostinfo);
 		WSACleanup();
 #else
-		ret_getaddr=getaddrinfo(node.c_str(),port.c_str(),&hints,&hostinfo);
+		ret_getaddr=getaddrinfo(node.c_str(),port.c_str(),NULL,&hostinfo);
 #endif
 		if(ret_getaddr)
 		{
@@ -64,13 +62,16 @@ int address_t::from_str(char *str)
 		if(AF_INET==hostinfo->ai_family)
 		{
 			inner.ipv4=*(sockaddr_in*)hostinfo->ai_addr;
+			freeaddrinfo(hostinfo);
 		}
 		else if(AF_INET6==hostinfo->ai_family)
 		{
 			inner.ipv6=*(sockaddr_in6*)hostinfo->ai_addr;
+			freeaddrinfo(hostinfo);
 		}
 		else
 		{
+			freeaddrinfo(hostinfo);
 			mylog(log_error,"ip_addr is invalid\n");
 			myexit(-1);
 		}
