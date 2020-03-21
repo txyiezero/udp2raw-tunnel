@@ -23,9 +23,9 @@ int address_t::from_str(char *str)
 	const string flnode=str;
 	mylog(log_info,"parsing address: %s\n",str);
 
-	regex rgxhostname("^((?:[a-zA-Z0-9-]+\\.)+[a-z]{2,3}):([0-9]{4,5})$");
-	regex rgxipv4("^((?:[0-9]{1,3}\\.){3}[0-9]{1,3}):([0-9]{4,5})$");
-	regex rgxipv6("^\\[([a-z0-9:]+)\\]:([0-9]{4,5})$");
+	regex rgxhostname("^((?:(?:[[:alnum:]]+-?)*[[:alnum:]]+\\.)+[[:alpha:]]{2,63}):([[:digit:]]{4,5})$");
+	regex rgxipv4("^((?:[[:digit:]]{1,3}\\.){3}[[:digit:]]{1,3}):([[:digit:]]{4,5})$");
+	regex rgxipv6("^\\[(([[:xdigit:]]{1,4}:)+:?([[:xdigit:]]{1,4}:)*[[:xdigit:]]{1,4})\\]:([[:digit:]]{4,5})$");
 	smatch shost;
 
 	if(regex_match(flnode,shost,rgxhostname)||\
